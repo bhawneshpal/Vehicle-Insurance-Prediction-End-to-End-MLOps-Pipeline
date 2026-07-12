@@ -1,62 +1,335 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vehicle Insurance Prediction</title>
-    <!-- Corrected the CSS path -->
-    <link rel="stylesheet" href="/static/css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Underwriting Assessment — Vehicle Cross-Sell</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2430;
+    --paper:#EFEDE6;
+    --card:#FBFAF7;
+    --gold:#C9A227;
+    --slate:#5B6472;
+    --line:#D8D4C8;
+    --approve:#2F7D5C;
+    --decline:#B23A2E;
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    padding:48px 20px 80px;
+  }
+
+  .sheet{
+    max-width:760px;
+    margin:0 auto;
+    background:var(--card);
+    border:1px solid var(--line);
+    box-shadow:0 1px 0 var(--line), 0 20px 40px -28px rgba(27,36,48,0.35);
+  }
+
+  /* Header band */
+  .letterhead{
+    padding:36px 44px 28px;
+    border-bottom:2px solid var(--ink);
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:20px;
+  }
+  .letterhead .mark{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:10px;
+  }
+  .letterhead h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:32px;
+    line-height:1.1;
+    margin:0;
+  }
+  .letterhead .sub{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--slate);
+    text-align:right;
+    line-height:1.6;
+  }
+
+  /* Result banner with dial */
+  .result{
+    margin:0;
+    padding:26px 44px;
+    display:flex;
+    align-items:center;
+    gap:22px;
+    border-bottom:2px solid var(--ink);
+  }
+  .result.yes{ background:#EEF6F1; }
+  .result.no{ background:#FBEFED; }
+  .dial-wrap{ flex:0 0 auto; }
+  .result-text .verdict{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:22px;
+    margin:0 0 4px;
+  }
+  .result.yes .verdict{ color:var(--approve); }
+  .result.no .verdict{ color:var(--decline); }
+  .result-text .detail{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--slate);
+  }
+  .needle{ transform-origin:60px 60px; transition:transform .6s cubic-bezier(.4,1.4,.4,1); }
+
+  /* Form sections */
+  form{ padding:8px 44px 40px; }
+
+  .section{ padding:26px 0; border-bottom:1px solid var(--line); }
+  .section:last-of-type{ border-bottom:none; }
+
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .section-head .letter{
+    font-family:'Fraunces',serif;
+    font-size:20px;
+    font-weight:600;
+    color:var(--gold);
+  }
+  .section-head .name{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--slate);
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:18px 24px;
+  }
+  @media (max-width:560px){ .grid{ grid-template-columns:1fr; } }
+
+  .field label{
+    display:block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--slate);
+    margin-bottom:6px;
+  }
+  .field select,
+  .field input{
+    width:100%;
+    padding:10px 12px;
+    font-family:'Inter',sans-serif;
+    font-size:14.5px;
+    color:var(--ink);
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:2px;
+    appearance:none;
+    -webkit-appearance:none;
+  }
+  .field select{
+    background-image:linear-gradient(45deg,transparent 50%,var(--slate) 50%),
+                      linear-gradient(135deg,var(--slate) 50%,transparent 50%);
+    background-position:calc(100% - 18px) center, calc(100% - 13px) center;
+    background-size:5px 5px, 5px 5px;
+    background-repeat:no-repeat;
+  }
+  .field select:focus,
+  .field input:focus{
+    outline:none;
+    border-color:var(--gold);
+    box-shadow:0 0 0 3px rgba(201,162,39,0.18);
+  }
+  .field .hint{
+    font-size:11px;
+    color:var(--slate);
+    margin-top:5px;
+  }
+
+  .submit-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:32px;
+    padding-top:24px;
+    border-top:2px solid var(--ink);
+  }
+  .submit-row .note{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--slate);
+    max-width:320px;
+  }
+  button.assess{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    color:var(--paper);
+    background:var(--ink);
+    border:none;
+    padding:14px 28px;
+    cursor:pointer;
+    letter-spacing:.02em;
+    transition:background .15s ease;
+  }
+  button.assess:hover{ background:#2C3A4E; }
+  button.assess:focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>Vehicle Insurance Prediction</h1>
 
-        <form method="post" action="/">
-            <label for="Gender">Gender (1: Male, 0: Female):</label>
-            <input type="number" id="Gender" name="Gender" min="0" max="1" required>
+  {% set outcome = context if context in ["Response-Yes", "Response-No"] else None %}
 
-            <label for="Age">Age:</label>
-            <input type="number" id="Age" name="Age" required>
+  <div class="sheet">
 
-            <label for="Driving_License">Driving License (0: No, 1: Yes):</label>
-            <input type="number" id="Driving_License" name="Driving_License" min="0" max="1" required>
-
-            <label for="Region_Code">Region Code:</label>
-            <input type="number" step="0.01" id="Region_Code" name="Region_Code" required>
-
-            <label for="Previously_Insured">Previously Insured (0: No, 1: Yes):</label>
-            <input type="number" id="Previously_Insured" name="Previously_Insured" min="0" max="1" required>
-
-            <label for="Annual_Premium">Annual Premium:</label>
-            <input type="number" step="0.01" id="Annual_Premium" name="Annual_Premium" required>
-
-            <label for="Policy_Sales_Channel">Policy Sales Channel:</label>
-            <input type="number" step="0.01" id="Policy_Sales_Channel" name="Policy_Sales_Channel" required>
-
-            <label for="Vintage">Vintage:</label>
-            <input type="number" id="Vintage" name="Vintage" required>
-
-            <label for="Vehicle_Age_lt_1_Year">Vehicle Age < 1 Year (0: No, 1: Yes):</label>
-            <input type="number" id="Vehicle_Age_lt_1_Year" name="Vehicle_Age_lt_1_Year" min="0" max="1" required>
-
-            <label for="Vehicle_Age_gt_2_Years">Vehicle Age > 2 Years (0: No, 1: Yes):</label>
-            <input type="number" id="Vehicle_Age_gt_2_Years" name="Vehicle_Age_gt_2_Years" min="0" max="1" required>
-
-            <label for="Vehicle_Damage_Yes">Vehicle Damage (0: No, 1: Yes):</label>
-            <input type="number" id="Vehicle_Damage_Yes" name="Vehicle_Damage_Yes" min="0" max="1" required>
-
-            <button type="submit">Predict</button>
-        </form>
-
-        <form method="get" action="/train">
-            <button type="submit" class="train-button">Train Model</button>
-        </form>
-
-        {% if context %}
-            <div class="result">
-                <h2>Result: {{ context }}</h2>
-            </div>
-        {% endif %}
+    <div class="letterhead">
+      <div>
+        <div class="mark">Cross-Sell Risk Model</div>
+        <h1>Underwriting<br>Assessment</h1>
+      </div>
+      <div class="sub">Form&nbsp;VD-11<br>Vehicle Insurance Line</div>
     </div>
+
+    {% if outcome %}
+    <div class="result {{ 'yes' if outcome == 'Response-Yes' else 'no' }}">
+      <div class="dial-wrap">
+        <svg width="120" height="70" viewBox="0 0 120 70">
+          <path d="M10,60 A50,50 0 0 1 110,60" fill="none" stroke="var(--line)" stroke-width="10" stroke-linecap="round"/>
+          <path d="M10,60 A50,50 0 0 1 60,10" fill="none" stroke="var(--approve)" stroke-width="10" stroke-linecap="round" opacity="0.55"/>
+          <path d="M60,10 A50,50 0 0 1 110,60" fill="none" stroke="var(--decline)" stroke-width="10" stroke-linecap="round" opacity="0.55"/>
+          <g class="needle" style="transform:rotate({{ '58deg' if outcome == 'Response-Yes' else '-58deg' }})">
+            <line x1="60" y1="60" x2="60" y2="18" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/>
+          </g>
+          <circle cx="60" cy="60" r="5.5" fill="var(--ink)"/>
+        </svg>
+      </div>
+      <div class="result-text">
+        <p class="verdict">{{ 'Likely to respond' if outcome == 'Response-Yes' else 'Unlikely to respond' }}</p>
+        <p class="detail">MODEL OUTPUT — {{ outcome }}</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <form action="/" method="post">
+
+      <div class="section">
+        <div class="section-head"><span class="letter">A</span><span class="name">Driver Profile</span></div>
+        <div class="grid">
+          <div class="field">
+            <label for="Gender">Gender</label>
+            <select id="Gender" name="Gender" required>
+              <option value="" disabled selected>Select</option>
+              <option value="1">Male</option>
+              <option value="0">Female</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="Age">Age</label>
+            <input type="number" id="Age" name="Age" min="18" max="100" placeholder="e.g. 34" required>
+          </div>
+          <div class="field">
+            <label for="Driving_License">Holds Driving Licence</label>
+            <select id="Driving_License" name="Driving_License" required>
+              <option value="" disabled selected>Select</option>
+              <option value="1">Yes</option>
+              <option value="0">No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="Region_Code">Region Code</label>
+            <input type="number" step="1" id="Region_Code" name="Region_Code" placeholder="e.g. 28" required>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><span class="letter">B</span><span class="name">Vehicle Details</span></div>
+        <div class="grid">
+          <div class="field">
+            <label for="Vehicle_Age_lt_1_Year">Vehicle Age Under 1 Year</label>
+            <select id="Vehicle_Age_lt_1_Year" name="Vehicle_Age_lt_1_Year" required>
+              <option value="" disabled selected>Select</option>
+              <option value="1">Yes</option>
+              <option value="0">No</option>
+            </select>
+            <p class="hint">Select "No" for both age fields if 1–2 years old</p>
+          </div>
+          <div class="field">
+            <label for="Vehicle_Age_gt_2_Years">Vehicle Age Over 2 Years</label>
+            <select id="Vehicle_Age_gt_2_Years" name="Vehicle_Age_gt_2_Years" required>
+              <option value="" disabled selected>Select</option>
+              <option value="1">Yes</option>
+              <option value="0">No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="Vehicle_Damage_Yes">Prior Vehicle Damage</label>
+            <select id="Vehicle_Damage_Yes" name="Vehicle_Damage_Yes" required>
+              <option value="" disabled selected>Select</option>
+              <option value="1">Yes</option>
+              <option value="0">No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="Previously_Insured">Previously Insured</label>
+            <select id="Previously_Insured" name="Previously_Insured" required>
+              <option value="" disabled selected>Select</option>
+              <option value="1">Yes</option>
+              <option value="0">No</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><span class="letter">C</span><span class="name">Coverage &amp; Channel</span></div>
+        <div class="grid">
+          <div class="field">
+            <label for="Annual_Premium">Annual Premium (₹)</label>
+            <input type="number" step="0.01" id="Annual_Premium" name="Annual_Premium" placeholder="e.g. 32400" required>
+          </div>
+          <div class="field">
+            <label for="Policy_Sales_Channel">Policy Sales Channel</label>
+            <input type="number" step="0.01" id="Policy_Sales_Channel" name="Policy_Sales_Channel" placeholder="e.g. 152" required>
+          </div>
+          <div class="field">
+            <label for="Vintage">Vintage (days as customer)</label>
+            <input type="number" id="Vintage" name="Vintage" placeholder="e.g. 217" required>
+          </div>
+        </div>
+      </div>
+
+      <div class="submit-row">
+        <p class="note">Submitting runs the underwriting model against the profile above and returns a response likelihood.</p>
+        <button type="submit" class="assess">Run assessment</button>
+      </div>
+
+    </form>
+  </div>
+
 </body>
 </html>
